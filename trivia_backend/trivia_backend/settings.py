@@ -26,7 +26,8 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'default-secret-key')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['battletrivia-53f5e19174e5.herokuapp.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['battletrivia-53f5e19174e5.herokuapp.com', 'localhost', '127.0.0.1',
+                 'localhost', '127.0.0.1']
 
 
 # Application definition
