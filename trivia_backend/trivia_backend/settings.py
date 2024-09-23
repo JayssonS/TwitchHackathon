@@ -26,8 +26,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'default-secret-key')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['battletrivia-53f5e19174e5.herokuapp.com', 'localhost', '127.0.0.1',
-                 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['battletrivia-53f5e19174e5.herokuapp.com', 'localhost', '127.0.0.1',]
 
 
 # Application definition
@@ -153,14 +152,15 @@ AUTHENTICATION_BACKENDS = (
 )
 
 # Define the redirect URLs after login/logout
-LOGIN_REDIRECT_URL = '/'  # Redirect here after successful login
+LOGIN_REDIRECT_URL = '/dashboard/'  # Redirect to the dashboard after login
 LOGOUT_REDIRECT_URL = '/'  # Redirect here after logout
 
 # Additional social-auth settings
 SOCIAL_AUTH_URL_NAMESPACE = 'social'
 
 # Include the OAuth redirect URL
-TWITCH_REDIRECT_URI = 'http://localhost:8000/auth/complete/twitch/'  # Update this for production
+TWITCH_REDIRECT_URI = os.getenv('TWITCH_REDIRECT_URI', 'http://localhost:8000/auth/complete/twitch/')
+
 
 # Allow CORS if needed in development
 CORS_ORIGIN_ALLOW_ALL = True
