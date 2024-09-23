@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'users',
     'social_django',
-    'corsheaders',  # This is correctly placed here
+    'corsheaders',
+    'trivia',
 ]
 
 MIDDLEWARE = [
