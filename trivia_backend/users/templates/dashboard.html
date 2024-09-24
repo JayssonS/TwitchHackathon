@@ -1,107 +1,25 @@
 <!-- dashboard.html -->
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trivia Dashboard</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
-    <style>
-        body {
-            padding: 20px;
-        }
-        .trivia-container {
-            margin-top: 20px;
-        }
-        .trivia-question {
-            margin-bottom: 20px;
-            padding: 15px;
-            border: 1px solid #e1e1e1;
-            border-radius: 5px;
-            background-color: #f9f9f9;
-        }
-        .answers {
-            margin-top: 10px;
-        }
-        .correct {
-            color: green;
-        }
-        .incorrect {
-            color: red;
-        }
-    </style>
+    <title>Dashboard</title>
 </head>
 <body>
-    <section class="section">
-        <div class="container">
-            <h1 class="title">Welcome to the Trivia Game!</h1>
-            <h2 class="subtitle">Test your knowledge and have fun!</h2>
-            <button id="fetch-trivia" class="button is-primary">Fetch Trivia Questions</button>
+    <h1>Welcome, {{ username }}!</h1>
 
-            <div id="trivia-container" class="trivia-container"></div>
-        </div>
-    </section>
+    <form method="post" action="{% url 'start_bot' %}">
+        {% csrf_token %}
+        <button type="submit">Start Bot</button>
+    </form>
 
-    <script>
-        document.getElementById('fetch-trivia').addEventListener('click', fetchTriviaQuestions);
+    <form method="post" action="{% url 'stop_bot' %}">
+        {% csrf_token %}
+        <button type="submit">Stop Bot</button>
+    </form>
 
-        async function fetchTriviaQuestions() {
-            try {
-                const response = await fetch('/trivia/fetch/');
-                const data = await response.json();
-
-                if (data.results) {
-                    const triviaContainer = document.getElementById('trivia-container');
-                    triviaContainer.innerHTML = ''; // Clear previous questions
-
-                    data.results.forEach((question, index) => {
-                        const questionElement = document.createElement('div');
-                        questionElement.classList.add('trivia-question');
-
-                        // Display question
-                        questionElement.innerHTML = `<p><strong>Q${index + 1}:</strong> ${question.question}</p>`;
-
-                        // Display answer options
-                        const answersContainer = document.createElement('div');
-                        answersContainer.classList.add('answers');
-
-                        // Combine correct and incorrect answers, then shuffle
-                        const allAnswers = [...question.incorrect_answers, question.correct_answer].sort(() => Math.random() - 0.5);
-
-                        allAnswers.forEach(answer => {
-                            const answerButton = document.createElement('button');
-                            answerButton.classList.add('button', 'is-light', 'is-small', 'answer-option');
-                            answerButton.innerHTML = answer;
-                            answerButton.onclick = () => checkAnswer(answer, question.correct_answer, answerButton);
-
-                            answersContainer.appendChild(answerButton);
-                        });
-
-                        questionElement.appendChild(answersContainer);
-                        triviaContainer.appendChild(questionElement);
-                    });
-                }
-            } catch (error) {
-                console.error('Error fetching trivia questions:', error);
-            }
-        }
-
-        function checkAnswer(selectedAnswer, correctAnswer, button) {
-            if (selectedAnswer === correctAnswer) {
-                button.classList.add('is-success');
-                button.textContent += " ✔️";
-            } else {
-                button.classList.add('is-danger');
-                button.textContent += " ❌";
-            }
-            // Disable all answer options once an answer is selected
-            button.parentNode.querySelectorAll('button').forEach(btn => {
-                btn.disabled = true;
-                if (btn.innerHTML === correctAnswer && btn !== button) {
-                    btn.classList.add('is-success');
-                }
-            });
-        }
-    </script>
+    <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit">Logout</button>
+    </form>
 </body>
 </html>
