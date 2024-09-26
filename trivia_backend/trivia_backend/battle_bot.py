@@ -1,7 +1,6 @@
 import os
 import asyncio
 from twitchio.ext import commands
-from users.models import TwitchChannel  # Make sure this model exists
 from asgiref.sync import sync_to_async
 
 class BattleBot(commands.Bot):
@@ -36,6 +35,8 @@ class BattleBot(commands.Bot):
         self.loop.run_until_complete(self.start())
 
     def get_channels(self):
+        # Import the model within the method to ensure apps are loaded
+        from users.models import TwitchChannel
         # Fetch all Twitch channels from your database
         channels = list(TwitchChannel.objects.values_list('channel_name', flat=True))
         print(f"Channels retrieved in get_channels: {channels}")  # Debugging statement
