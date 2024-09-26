@@ -1,6 +1,9 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout as auth_logout
+from django.contrib.auth.models import User
+from users.models import TwitchChannel
+from social_django.utils import load_strategy
 import os
 import threading
 import asyncio
@@ -23,6 +26,18 @@ def dashboard(request):
 def logout_view(request):
     auth_logout(request)
     return redirect('/')
+
+@login_required
+def save_twitch_channel(request):
+    if request.user.is_authenticated:
+        channel_name = request.user.username
+        # Link the TwitchChannel with the logged-in user
+        TwitchChannel.objects.update_or_create(
+            user=request.user,  # Set the user field to the logged-in user
+            defaults={'channel_name': channel_name}
+        )
+        print(f"Channel '{channel_name}' saved to database with user {request.user}.")
+    return redirect('/dashboard/')
 
 # Start the bot when the server starts
 def start_bot():
