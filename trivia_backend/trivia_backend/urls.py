@@ -4,6 +4,5 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('trivia/', include('trivia.urls')),  # Include trivia URLs
-    path('', include('users.urls')),
+    path('', include('users.urls')),  # Include the URLs from your 'users' app
 ]

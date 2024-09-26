@@ -1,25 +1,14 @@
-<!-- dashboard.html -->
+<!-- templates/dashboard.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
 </head>
 <body>
     <h1>Welcome, {{ username }}!</h1>
-
-    <form method="post" action="{% url 'start_bot' %}">
-        {% csrf_token %}
-        <button type="submit">Start Bot</button>
-    </form>
-
-    <form method="post" action="{% url 'stop_bot' %}">
-        {% csrf_token %}
-        <button type="submit">Stop Bot</button>
-    </form>
-
-    <form method="post" action="{% url 'logout' %}">
-        {% csrf_token %}
-        <button type="submit">Logout</button>
-    </form>
+    <a href="{% url 'logout' %}">Logout</a>
+    <h2>Your Twitch Bot is now active!</h2>
 </body>
 </html>
