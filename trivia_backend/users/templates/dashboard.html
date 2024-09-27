@@ -1,10 +1,13 @@
-<!-- templates/dashboard.html -->
-
 {% if user.is_authenticated %}
     <h1>Welcome, {{ username }}</h1>
 
+    <!-- Logout button -->
+    <div style="margin-top: 10px;">
+        <a href="{% url 'logout' %}" class="btn btn-danger">Logout</a>
+    </div>
+
     <!-- Search for a user to friend -->
-    <div id="search-container">
+    <div id="search-container" style="margin-top: 20px;">
         <input type="text" id="search-username" placeholder="Search for a user">
         <button onclick="searchUser()">Search</button>
     </div>
@@ -13,21 +16,51 @@
     <div id="search-result" style="display: none; margin-top: 10px;">
         <p id="result-message"></p>
     </div>
+
+    <!-- Friend Sidebar -->
+    <div id="friend-sidebar" style="position: fixed; right: 0; top: 100px; width: 250px; background-color: #f1f1f1; padding: 10px; border-left: 1px solid #ccc;">
+        <h3>Friends</h3>
+        <ul id="friends-list"></ul>
+
+        <h3>Pending Requests</h3>
+        <ul id="pending-requests"></ul>
+    </div>
 {% else %}
     <h1>Welcome to Battle Trivia</h1>
     <a href="{% url 'social:begin' 'twitch' %}" class="btn btn-primary">Log in with Twitch</a>
 {% endif %}
 
 <script>
-    // Function to search for a user
+    let socket;
+
+    // Initialize WebSocket connection
+    function initializeWebSocket() {
+        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+        socket = new WebSocket(`ws://${window.location.host}/ws/friends/${username}/`);
+        socket.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        console.log('WebSocket Message:', data);
+
+        if (data.type === 'friend_list_updated') {
+            loadFriends();
+            loadPendingRequests();
+        }
+    };
+
+        socket.onopen = () => console.log('WebSocket connection established.');
+        socket.onclose = () => {
+            console.log('WebSocket connection closed. Reconnecting...');
+            setTimeout(initializeWebSocket, 5000);
+        };
+    }
+
     function searchUser() {
         const username = document.getElementById('search-username').value;
-
         fetch('/search_user/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken') // Get CSRF token from cookies
+                'X-CSRFToken': getCookie('csrftoken')
             },
             body: JSON.stringify({ 'username': username })
         })
@@ -35,12 +68,9 @@
         .then(data => {
             const resultContainer = document.getElementById('search-result');
             resultContainer.style.display = 'block';
-
             if (data.status === 'success') {
-                resultContainer.innerHTML = `
-                    <p>User found: ${data.username}</p>
-                    <button onclick="sendFriendRequest(${data.user_id})">Send Friend Request</button>
-                `;
+                resultContainer.innerHTML = `<p>User found: ${data.username}</p>
+                                             <button onclick="sendFriendRequest(${data.user_id})">Send Friend Request</button>`;
             } else {
                 resultContainer.innerHTML = `<p style="color: red;">${data.message}</p>`;
             }
@@ -48,7 +78,109 @@
         .catch(error => console.error('Error:', error));
     }
 
-    // Get CSRF token function
+    function sendFriendRequest(userId) {
+        fetch(`/send_friend_request/${userId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => alert(data.message))
+        .catch(error => console.error('Error:', error));
+    }
+
+    function loadFriends() {
+        fetch('/get_friends/')
+        .then(response => response.json())
+        .then(data => {
+            const friendsList = document.getElementById('friends-list');
+            friendsList.innerHTML = '';
+            data.forEach(friend => {
+                const friendItem = document.createElement('li');
+                friendItem.textContent = friend.username;
+                friendItem.style.cursor = 'pointer';
+                friendItem.style.position = 'relative';
+
+                if (friend.online) {
+                    const indicator = document.createElement('span');
+                    indicator.style.backgroundColor = 'green';
+                    indicator.style.width = '10px';
+                    indicator.style.height = '10px';
+                    indicator.style.position = 'absolute';
+                    indicator.style.top = '5px';
+                    indicator.style.left = '-15px';
+                    indicator.style.borderRadius = '50%';
+                    indicator.style.display = 'inline-block';
+                    friendItem.appendChild(indicator);
+                }
+
+                friendItem.dataset.friendId = friend.id;
+                friendItem.addEventListener('contextmenu', function(event) {
+                    event.preventDefault();
+                    if (confirm(`Are you sure you want to remove ${friend.username} as a friend?`)) {
+                        removeFriend(friend.id);
+                    }
+                });
+
+                friendsList.appendChild(friendItem);
+            });
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function removeFriend(friendId) {
+        fetch(`/remove_friend/${friendId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => alert(data.message))
+        .catch(error => console.error('Error:', error));
+    }
+
+    function loadPendingRequests() {
+        fetch('/pending_requests/')
+        .then(response => response.json())
+        .then(data => {
+            const pendingRequests = document.getElementById('pending-requests');
+            pendingRequests.innerHTML = '';
+            data.forEach(request => {
+                const requestItem = document.createElement('li');
+                requestItem.textContent = request.from_username;
+                const acceptButton = document.createElement('button');
+                acceptButton.textContent = 'Accept';
+                acceptButton.onclick = () => respondFriendRequest(request.from_user_id, 'accept');
+                requestItem.appendChild(acceptButton);
+
+                const declineButton = document.createElement('button');
+                declineButton.textContent = 'Decline';
+                declineButton.onclick = () => respondFriendRequest(request.from_user_id, 'decline');
+                requestItem.appendChild(declineButton);
+
+                pendingRequests.appendChild(requestItem);
+            });
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function respondFriendRequest(fromUserId, response) {
+        fetch(`/respond_friend_request/${fromUserId}/${response}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => alert(data.message))
+        .catch(error => console.error('Error:', error));
+    }
+
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -63,4 +195,10 @@
         }
         return cookieValue;
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeWebSocket(); // Establish the WebSocket connection
+        loadFriends();
+        loadPendingRequests();
+    });
 </script>

@@ -1,5 +1,5 @@
 from django.urls import path, include
-from .views import send_friend_request, respond_friend_request, get_friends
+from .views import send_friend_request, respond_friend_request, get_friends, remove_friend, get_pending_requests
 from . import views
 
 urlpatterns = [
@@ -12,4 +12,6 @@ urlpatterns = [
     path('send_friend_request/<int:to_user_id>/', send_friend_request, name='send_friend_request'),
     path('respond_friend_request/<int:from_user_id>/<str:response>/', respond_friend_request, name='respond_friend_request'),
     path('get_friends/', get_friends, name='get_friends'),
+    path('remove_friend/<int:friend_id>/', remove_friend, name='remove_friend'),
+    path('pending_requests/', get_pending_requests, name='pending_requests'),
 ]

@@ -1,5 +1,7 @@
 import os
+import urllib.parse as urlparse  # For parsing Redis URL
 from pathlib import Path
+import django_heroku  # For Heroku settings
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -20,6 +22,7 @@ INSTALLED_APPS = [
     'users',
     'social_django',
     'corsheaders',
+    'channels',  # Added channels
 ]
 
 MIDDLEWARE = [
@@ -54,7 +57,9 @@ TEMPLATES = [
     },
 ]
 
+# Changed from WSGI to ASGI for Channels support
 WSGI_APPLICATION = 'trivia_backend.wsgi.application'
+ASGI_APPLICATION = 'trivia_backend.asgi.application'  # Added ASGI application path
 
 DATABASES = {
     'default': {
@@ -101,8 +106,27 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
 
+# Extract REDIS_URL from Heroku environment variables or use local settings
+redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379')
+
+urlparse.uses_netloc.append('redis')
+redis_conf = urlparse.urlparse(redis_url)
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [(redis_conf.hostname, redis_conf.port)],
+            "password": redis_conf.password,  # Include password if available in URL
+        },
+    },
+}
+
 LOGIN_REDIRECT_URL = '/save_twitch_channel/'
 LOGOUT_REDIRECT_URL = '/'
 SOCIAL_AUTH_URL_NAMESPACE = 'social'
 
 CORS_ORIGIN_ALLOW_ALL = True
+
+# Activate Django-Heroku settings for database and static files
+django_heroku.settings(locals())

@@ -1,0 +1,80 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment variables
+.env
+
+# Django stuff:
+*.log
+db.sqlite3
+*.pot
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+
+# Ignore Django migrations
+*/migrations/*.py
+*/migrations/*.pyc
+
+# IDE files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Media folder (if you have user-uploaded content)
+media/
+
+# Local settings
+local_settings.py
+
+# Static files collected
+/staticfiles/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Heroku settings
+*.local
+
+# Python egg files
+*.egg
+*.egg-info/
+.eggs/
+
+# Coverage reports
+htmlcov/
+.tox/
+.coverage
+coverage.xml
+.cache
+nosetests.xml
+coverage_html_report/
+.pytest_cache/
+
+# Docker
+*.env.*
+docker-compose.yml
+
+# Channels/Redis related files
+celerybeat-schedule
+celerybeat.pid
+
+# Ignore pipfile and virtualenv files
+Pipfile
+Pipfile.lock
+__pypackages__/
+venv/
+ENV/
+env/
+venv.bak/
+
+# VS Code settings
+.vscode/
