@@ -1,5 +1,8 @@
 from django.shortcuts import redirect, render
 from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect
+from django.http import JsonResponse
+from .models import User, Friendship, UserProfile
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.models import User
 from users.models import TwitchChannel
@@ -55,3 +58,48 @@ def start_bot():
     if bot_thread is None or not bot_thread.is_alive():
         bot_thread = threading.Thread(target=run_bot, daemon=True, name="TwitchBotThread")
         bot_thread.start()
+
+@login_required
+def send_friend_request(request, to_user_id):
+    to_user = get_object_or_404(User, id=to_user_id)
+    friendship, created = Friendship.objects.get_or_create(from_user=request.user, to_user=to_user)
+    if not created:
+        return JsonResponse({'message': 'Friend request already sent'}, status=400)
+    return JsonResponse({'message': 'Friend request sent successfully'}, status=200)
+
+@login_required
+def respond_friend_request(request, from_user_id, response):
+    friendship = get_object_or_404(Friendship, from_user_id=from_user_id, to_user=request.user)
+    if response == 'accept':
+        friendship.status = 'accepted'
+        friendship.save()
+        return JsonResponse({'message': 'Friend request accepted'}, status=200)
+    elif response == 'decline':
+        friendship.status = 'declined'
+        friendship.save()
+        return JsonResponse({'message': 'Friend request declined'}, status=200)
+    return JsonResponse({'message': 'Invalid response'}, status=400)
+
+@login_required
+def get_friends(request):
+    friends = Friendship.objects.filter(to_user=request.user, status='accepted') | Friendship.objects.filter(from_user=request.user, status='accepted')
+    friend_list = [{
+        'username': friend.from_user.username if friend.to_user == request.user else friend.to_user.username,
+        'online': friend.from_user.userprofile.online if friend.to_user == request.user else friend.to_user.userprofile.online,
+    } for friend in friends]
+    return JsonResponse(friend_list, safe=False)
+
+@login_required
+def search_user(request):
+    if request.method == 'POST':
+        # Get the username from the request
+        username = request.POST.get('username')
+
+        # Check if the user exists
+        try:
+            user = User.objects.get(username=username)
+            if user == request.user:
+                return JsonResponse({'status': 'error', 'message': "Nice try bucko"})
+            return JsonResponse({'status': 'success', 'username': user.username, 'user_id': user.id})
+        except User.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'User not found'})

@@ -1,14 +1,85 @@
 <!-- templates/dashboard.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
-</head>
-<body>
-    <h1>Welcome, {{ username }}!</h1>
-    <a href="{% url 'logout' %}">Logout</a>
-    <h2>Your Twitch Bot is now active!</h2>
-</body>
-</html>
+
+<h1>Welcome, {{ username }}</h1>
+
+<!-- Search for a user to friend -->
+<div id="search-container">
+    <input type="text" id="search-username" placeholder="Search for a user">
+    <button onclick="searchUser()">Search</button>
+</div>
+
+<!-- Display search results -->
+<div id="search-result" style="display: none; margin-top: 10px;">
+    <p id="result-message"></p>
+</div>
+
+<script>
+    // Function to search for a user
+    function searchUser() {
+        const username = document.getElementById('search-username').value;
+
+        fetch('/search_user/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken') // Get CSRF token from cookies
+            },
+            body: JSON.stringify({ 'username': username })
+        })
+        .then(response => response.json())
+        .then(data => {
+            const resultContainer = document.getElementById('search-result');
+            resultContainer.style.display = 'block';
+
+            if (data.status === 'success') {
+                resultContainer.innerHTML = `
+                    <p>User found: ${data.message}</p>
+                    <button onclick="sendFriendRequest(${data.user_id})">Send Friend Request</button>
+                `;
+            } else {
+                resultContainer.innerHTML = `<p style="color: red;">${data.message}</p>`;
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    // Function to send a friend request
+    function sendFriendRequest(userId) {
+        fetch('/send_friend_request/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ 'user_id': userId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            const resultContainer = document.getElementById('search-result');
+            resultContainer.style.display = 'block';
+
+            if (data.status === 'success') {
+                resultContainer.innerHTML = `<p style="color: green;">${data.message}</p>`;
+            } else {
+                resultContainer.innerHTML = `<p style="color: red;">${data.message}</p>`;
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    // Get CSRF token function
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
